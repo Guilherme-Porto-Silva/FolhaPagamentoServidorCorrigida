@@ -2,7 +2,6 @@ package implementadores;
 
 import RMI.Conexao;
 import interfaces.InterfaceFuncionario;
-import modelos.Funcionario;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.PreparedStatement;
@@ -12,8 +11,6 @@ import java.util.List;
 public class ServicoFuncionario extends UnicastRemoteObject implements InterfaceFuncionario {
 
     public ServicoFuncionario () throws RemoteException {}
-
-    private final Conexao LINK = new Conexao();
 
     private final String SQL_CADASTRO_FUNCIONARIO = "insert into Funcionario (nome, cpf, cargoID) values (?, ?, ?)";
 
@@ -25,8 +22,6 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
     private final String SQL_DEMICAO_JUSTIFICATIVA = "insert into Demissoes (funcionario_demitido, razao_demissao) values (?, ?)";
 
-    private final String SQL_ACHAR_FUNCIONARIO = "select * from Funcionario where Funcionario.id = ?";
-
     private final String SQL_LISTAR_FUNCIONARIOS = "select nome from Funcionario";
 
 
@@ -36,9 +31,9 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
         boolean deuCerto;
 
         try{
-            LINK.conectar();
+            Conexao comServidor = new Conexao();
 
-            PreparedStatement sentencaFuncionario = LINK.link.prepareStatement(SQL_CADASTRO_FUNCIONARIO);
+            PreparedStatement sentencaFuncionario = comServidor.link.prepareStatement(SQL_CADASTRO_FUNCIONARIO);
 
             sentencaFuncionario.setString(1, nome);
 
@@ -48,7 +43,7 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
             deuCerto = !sentencaFuncionario.execute();
 
-            LINK.link.close();
+            comServidor.link.close();
         }
 
         catch (Exception e) {
@@ -68,9 +63,9 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
         boolean deuCerto;
 
         try {
-            LINK.conectar();
+            Conexao comServidor = new Conexao();
 
-            PreparedStatement sentencaJustificativa = LINK.link.prepareStatement(SQL_DEMICAO_JUSTIFICATIVA);
+            PreparedStatement sentencaJustificativa = comServidor.link.prepareStatement(SQL_DEMICAO_JUSTIFICATIVA);
 
             sentencaJustificativa.setInt(1, funcionarioID);
 
@@ -78,7 +73,7 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
             int linhasJustificativa = sentencaJustificativa.executeUpdate();
 
-            PreparedStatement sentencaDemissao = LINK.link.prepareStatement(SQL_DEMICAO_FUNCIONARIO);
+            PreparedStatement sentencaDemissao = comServidor.link.prepareStatement(SQL_DEMICAO_FUNCIONARIO);
 
             sentencaDemissao.setInt(1, funcionarioID);
 
@@ -86,7 +81,7 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
             deuCerto = (linhasJustificativa > 0 && linhasDemissao > 0);
 
-            LINK.link.close();
+            comServidor.link.close();
         }
 
         catch (Exception e) {
@@ -101,48 +96,27 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
 
 
-    public Funcionario acharFuncionario (int funcionarioID) throws RemoteException {
-
-        Funcionario procurado;
-
-        try {
-            LINK.conectar();
-
-            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_ACHAR_FUNCIONARIO);
-
-            var resultado = sentenca.executeQuery();
-
-            procurado = resultado.getObject(0, Funcionario.class);
-
-            LINK.link.close();
-        }
-
-        catch (Exception e) {
-
-            throw new RuntimeException("\nErro ao listar funcionários: " + e.getMessage());
-        }
-
-        return procurado;
-    }
-
-
-
     @Override public List<String> listarFuncionarios () throws RemoteException {
 
         List<String> lista = new LinkedList<>();
 
         try {
-            LINK.conectar();
+            Conexao comServidor = new Conexao();
 
-            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_LISTAR_FUNCIONARIOS);
+            PreparedStatement sentenca = comServidor.link.prepareStatement(SQL_LISTAR_FUNCIONARIOS);
 
             var resultado = sentenca.executeQuery();
 
-            var tamanhoResultado = resultado.getFetchSize();
+            int posicaoAtual = 0;
 
-            for (var i = 0; i < tamanhoResultado; i++) lista.add(resultado.getString(i));
+            while (resultado.next()) {
 
-            LINK.link.close();
+                lista.add(resultado.getString(posicaoAtual));
+
+                posicaoAtual++;
+            }
+
+            comServidor.link.close();
         }
 
         catch (Exception e) {
@@ -160,9 +134,9 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
         boolean deuCerto;
 
         try {
-            LINK.conectar();
+            Conexao comServidor = new Conexao();
 
-            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_CADASTRO_CARGO);
+            PreparedStatement sentenca = comServidor.link.prepareStatement(SQL_CADASTRO_CARGO);
 
             sentenca.setString(1, nome);
 
@@ -172,7 +146,7 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
             deuCerto = !sentenca.execute();
 
-            LINK.link.close();
+            comServidor.link.close();
         }
 
         catch (Exception e) {
@@ -192,15 +166,15 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
         boolean deuCerto;
 
         try {
-            LINK.conectar();
+            Conexao comServidor = new Conexao();
 
-            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_CADASTRO_DEPARTAMENTO);
+            PreparedStatement sentenca = comServidor.link.prepareStatement(SQL_CADASTRO_DEPARTAMENTO);
 
             sentenca.setString(1, nome);
 
             deuCerto = !sentenca.execute();
 
-            LINK.link.close();
+            comServidor.link.close();
         }
 
         catch (Exception e) {

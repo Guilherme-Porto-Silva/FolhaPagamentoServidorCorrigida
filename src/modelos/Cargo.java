@@ -13,19 +13,19 @@ public class Cargo implements Serializable {
     
     private Departamento departamento;
     
-    private String horarioChegada, horarioSaida;
-
-    private NomeCargo nome;
+    private String horarioChegada, horarioSaida, nome;
 
 
 
     public Cargo (NomeCargo nomeCargo) {
 
-        nome = nomeCargo;
+        nome = nomeCargo.toString();
 
         switch (nomeCargo) {
 
             case NomeCargo.Gerente -> {
+
+                id = 1;
 
                 salario = 3660.00;
 
@@ -38,6 +38,8 @@ public class Cargo implements Serializable {
 
             case NomeCargo.Coordenador -> {
 
+                id = 2;
+
                 salario = 1830.00;
 
                 horarioChegada = "09:00";
@@ -48,6 +50,8 @@ public class Cargo implements Serializable {
             }
 
             case NomeCargo.Professora -> {
+
+                id = 3;
 
                 salario = 1189.50;
 

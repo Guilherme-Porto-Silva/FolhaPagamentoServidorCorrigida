@@ -6,6 +6,8 @@ public class Pagamento implements Serializable {
 
     private double salarioReceptor, aliquotaUtilizada, impostoCobrado, pagamentoPratico;
 
+
+
     public Pagamento (double aliquota, double salario) {
 
         salarioReceptor = salario;
@@ -18,6 +20,8 @@ public class Pagamento implements Serializable {
 
         pagamentoPratico = salario - impostoCalculado;
     }
+
+
 
     public double getSalario () {
 
@@ -37,31 +41,5 @@ public class Pagamento implements Serializable {
     public double getPagamentoPratico () {
 
         return pagamentoPratico;
-    }
-
-    public Object get (int coluna) {
-
-        switch (coluna) {
-
-            case 7 -> {
-                return salarioReceptor;
-            }
-
-            case 8 -> {
-                return aliquotaUtilizada;
-            }
-
-            case 9 -> {
-                return impostoCobrado;
-            }
-
-            case 10 -> {
-                return pagamentoPratico;
-            }
-
-            default -> {
-                return "Nossa tabela não tem " + coluna + " colunas.";
-            }
-        }
     }
 }

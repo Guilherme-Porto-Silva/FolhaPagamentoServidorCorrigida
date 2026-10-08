@@ -16,10 +16,6 @@ public class ServicoPagamento extends UnicastRemoteObject implements InterfacePa
 
     public ServicoPagamento () throws RemoteException {}
 
-    private final Conexao LINK = new Conexao();
-
-    private final ServicoFuncionario SERVICO_FUNCIONARIO = new ServicoFuncionario();
-
     private final String SQL_ACHAR_PAGAMENTO_FUNCIONARIO = "select pagamento from Funcionario where Funcionario.id = ?";
 
     private final String SQL_ACHAR_SALARIO = "select c.salario from Funcionario f join Cargo c on f.cargoID = c.id where f.id = ?";
@@ -37,9 +33,9 @@ public class ServicoPagamento extends UnicastRemoteObject implements InterfacePa
         double pagamento;
 
         try {
-            LINK.conectar();
+            Conexao comServidor = new Conexao();
 
-            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_ACHAR_PAGAMENTO_FUNCIONARIO);
+            PreparedStatement sentenca = comServidor.link.prepareStatement(SQL_ACHAR_PAGAMENTO_FUNCIONARIO);
 
             sentenca.setInt(1, funcionarioID);
 
@@ -47,7 +43,7 @@ public class ServicoPagamento extends UnicastRemoteObject implements InterfacePa
 
             pagamento = resultado.getDouble(1);
 
-            LINK.link.close();
+            comServidor.link.close();
         }
 
         catch (Exception e) {
@@ -76,93 +72,117 @@ public class ServicoPagamento extends UnicastRemoteObject implements InterfacePa
 
         return 0.14;
     }
+    
+    
+    
+    private ResultSet verificarJahFoiPago (Connection comServidor, int funcionarioID, String mesAno) {
+
+        try{
+            PreparedStatement verificacao = comServidor.prepareStatement(SQL_PAGAMENTO_JA_EFETUADO);
+
+            verificacao.setInt(1, funcionarioID);
+
+            verificacao.setString(2, mesAno);
+
+            ResultSet resultadoVerificacao = verificacao.executeQuery();
+
+            resultadoVerificacao.next();
+
+            if (resultadoVerificacao.getInt(1) > 0) throw new IllegalArgumentException("O funcionário " + funcionarioID + " já foi pago em " + mesAno + ".");
+
+            return resultadoVerificacao;
+        }
+        
+        catch (Exception e) {
+            
+            throw new IllegalArgumentException(funcionarioID + " já tinha sido pago.");
+        }
+    }
+
+
+
+    private double conferirSalario (Connection comServidor, int deQuem) {
+
+        try{
+            PreparedStatement verificacao = comServidor.prepareStatement(SQL_ACHAR_SALARIO);
+
+            verificacao.setInt(1, deQuem);
+
+            ResultSet resultadoVerificacao = verificacao.executeQuery();
+
+            if (!resultadoVerificacao.next()) throw new IllegalArgumentException("Funcionário " + deQuem + " não encontrado.");
+
+            return resultadoVerificacao.getDouble(1);
+        }
+
+        catch (Exception e) {
+
+            throw new IllegalArgumentException("Não consegui conferir o salário do funcionário com ID \"" + deQuem + "\". O problema foi o seguinte:\n\n" + e.getMessage());
+        }
+    }
+
+
+
+    private PreparedStatement sePrepararParaEfetuarPagamento (Connection comServidor, int paraQuem, String referenteAQuando, double quanto, double aliquota, double imposto, double pagamentoPratico) {
+
+        try{
+            PreparedStatement insercao = comServidor.prepareStatement(SQL_EFETUAR_PAGAMENTO);
+
+            insercao.setInt(1, paraQuem);
+
+            insercao.setString(2, referenteAQuando);
+
+            insercao.setDouble(3, quanto);
+
+            insercao.setDouble(4, aliquota);
+
+            insercao.setDouble(5, imposto);
+
+            insercao.setDouble(6, pagamentoPratico);
+
+            return insercao;
+        }
+        
+        catch (Exception e) {
+
+            throw new IllegalArgumentException("Não consegui me preparar para realizar o pagamento. O problema foi o seguinte:\n\n" + e.getMessage());
+        }
+    }
 
 
 
     @Override public void calcularEfetuarPagamento (int funcionarioID, String mesAno) throws RemoteException {
 
-        // 1. Valida o mês/ano (formato MM/aaaa).
         try {
-            YearMonth.parse(mesAno, FORMATO_MES_ANO);
+            YearMonth.parse(mesAno, FORMATO_MES_ANO);// Valida o mês/ano (formato MM/aaaa).
         }
 
         catch (DateTimeParseException | NullPointerException e) {
 
             throw new IllegalArgumentException("Mês/ano inválido: use o formato MM/aaaa (ex.: 03/2026).");
         }
+        
+        
 
         try {
-            LINK.conectar();
+            Conexao comServidor = new Conexao();
 
-            Connection conexao = LINK.link;
-
-            if (conexao == null) throw new IllegalStateException("Sem conexão com o banco de dados.");
-
-            try (conexao) {
-
-                // 2. Impede pagar duas vezes o mesmo funcionário no mesmo mês.
-                try (PreparedStatement verificacao = conexao.prepareStatement(SQL_PAGAMENTO_JA_EFETUADO)) {
-
-                    verificacao.setInt(1, funcionarioID);
-
-                    verificacao.setString(2, mesAno);
-
-                    try (ResultSet resultado = verificacao.executeQuery()) {
-
-                        resultado.next();
-
-                        if (resultado.getInt(1) > 0)
-                            throw new IllegalStateException("O funcionário " + funcionarioID + " já foi pago em " + mesAno + ".");
-                    }
-                }
-
-                // 3. Busca o salário do cargo do funcionário.
-                double salario;
-
-                try (PreparedStatement busca = conexao.prepareStatement(SQL_ACHAR_SALARIO)) {
-
-                    busca.setInt(1, funcionarioID);
-
-                    try (ResultSet resultado = busca.executeQuery()) {
-
-                        if (!resultado.next())
-                            throw new IllegalArgumentException("Funcionário " + funcionarioID + " não encontrado.");
-
-                        salario = resultado.getDouble(1);
-                    }
-                }
-
-                // 4. Calcula (alíquota, imposto e valor líquido ficam dentro de Pagamento).
-                Pagamento pagamento = new Pagamento(definirAliquota(salario), salario);
-
-                // 5. Efetua: registra o pagamento no banco.
-                try (PreparedStatement insercao = conexao.prepareStatement(SQL_EFETUAR_PAGAMENTO)) {
-
-                    insercao.setInt(1, funcionarioID);
-
-                    insercao.setString(2, mesAno);
-
-                    insercao.setDouble(3, pagamento.getSalario());
-
-                    insercao.setDouble(4, pagamento.getAliquota());
-
-                    insercao.setDouble(5, pagamento.getImposto());
-
-                    insercao.setDouble(6, pagamento.getPagamentoPratico());
-
-                    insercao.executeUpdate();
-                }
-            }
+            ResultSet resultadoVerificacaoJahFoiPago = verificarJahFoiPago(comServidor.link, funcionarioID, mesAno);
+            
+            var salario = conferirSalario(comServidor.link, funcionarioID);
+            
+            Pagamento pagamento = new Pagamento(definirAliquota(salario), salario);
+            
+            var insercao = sePrepararParaEfetuarPagamento(comServidor.link, funcionarioID, mesAno, pagamento.getSalario(), pagamento.getAliquota(), pagamento.getImposto(), pagamento.getPagamentoPratico());
+            
+            insercao.executeUpdate();
         }
 
-        catch (IllegalArgumentException | IllegalStateException e) {
+        catch (IllegalArgumentException ex) { throw ex; }
 
-            throw e;
-        }
+        catch (Exception ex) {
 
-        catch (Exception e) {
-
-            throw new RuntimeException("Erro ao calcular/efetuar o pagamento: " + e.getMessage());
+            throw new RuntimeException("Ocorreu um problema inesperado:\n\n" + ex.getMessage());
         }
     }
 }
