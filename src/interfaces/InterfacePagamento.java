@@ -1,15 +1,11 @@
 package interfaces;
 
 import java.rmi.Remote;
-import modelos.Pagamento;
+import java.rmi.RemoteException;
 
 public interface InterfacePagamento extends Remote {
 
-    double consultarPagamento (int funcionarioID);
+    double consultarPagamento (int funcionarioID) throws RemoteException;
 
-    void lancarPagamento(Pagamento p);// cadastra o salário, descontos, benefícios e data de pagamento
-
-    void consultarFolhaPagamento(int mes, int ano);// retorna a lista de pagamentos do mês/ano
-
-    void buscarHoleritePorFuncionario(int idFuncionario, int mes, int ano);// retorna os detalhes do pagamento de um funcionário específico
+    void calcularEfetuarPagamento(int funcionarioID, String mesAno) throws RemoteException;
 }

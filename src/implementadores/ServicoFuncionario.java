@@ -2,9 +2,12 @@ package implementadores;
 
 import RMI.Conexao;
 import interfaces.InterfaceFuncionario;
+import modelos.Funcionario;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.PreparedStatement;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ServicoFuncionario extends UnicastRemoteObject implements InterfaceFuncionario {
 
@@ -12,47 +15,38 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
     private final Conexao LINK = new Conexao();
 
-    private final String SQL_CADASTRO_FUNCIONARIO = "insert into Funcionario (nome, cargo) values (?, ?)";
+    private final String SQL_CADASTRO_FUNCIONARIO = "insert into Funcionario (nome, cpf, cargoID) values (?, ?, ?)";
 
     private final String SQL_DEMICAO_FUNCIONARIO = "delete from Funcionario where Funcionario.id = ?";
 
-    private final String SQL_CADASTRO_CARGO = "insert into Cargo (salario, departamento, horario_chegada, horario_saida) values (?, ?, ?, ?)";
+    private final String SQL_CADASTRO_CARGO = "insert into Cargo (nome, salario, departamento) values (?, ?, ?)";
+
+    private final String SQL_CADASTRO_DEPARTAMENTO = "insert into Departamento (nome) values (?)";
 
     private final String SQL_DEMICAO_JUSTIFICATIVA = "insert into Demissoes (funcionario_demitido, razao_demissao) values (?, ?)";
 
-    private final String SQL_ACHAR_FUNCIONARIO = "select nome from Funcionario where Funcionario.id = ?";
+    private final String SQL_ACHAR_FUNCIONARIO = "select * from Funcionario where Funcionario.id = ?";
 
-    private boolean cadastrarCargo () {
+    private final String SQL_LISTAR_FUNCIONARIOS = "select nome from Funcionario";
 
-        return false;
-    }
 
-    @Override public boolean cadastrarFuncionario () {
 
-        boolean deuCerto = true;
+    @Override public boolean cadastrarFuncionario (String nome, String cpf, int cargoID) throws RemoteException {
+
+        boolean deuCerto;
 
         try{
             LINK.conectar();
 
             PreparedStatement sentencaFuncionario = LINK.link.prepareStatement(SQL_CADASTRO_FUNCIONARIO);
 
-            PreparedStatement sentencaCargo = LINK.link.prepareStatement(SQL_CADASTRO_CARGO);
+            sentencaFuncionario.setString(1, nome);
 
-            sentencaFuncionario.setString(1, f.getNome());
+            sentencaFuncionario.setString(2, cpf);
 
-            sentencaFuncionario.setFloat(2, f.getCargo());
+            sentencaFuncionario.setInt(3, cargoID);
 
-            sentencaCargo.setString(1, c.getNome());
-
-            sentencaCargo.setFloat(2, c.getCargo());
-
-            sentencaCargo.setString(3, c.getNome());
-
-            sentencaCargo.setFloat(4, c.getCargo());
-
-            if (sentencaCargo.execute()) deuCerto = false;
-
-            if (sentencaFuncionario.execute()) deuCerto = false;
+            deuCerto = !sentencaFuncionario.execute();
 
             LINK.link.close();
         }
@@ -67,7 +61,9 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
         return deuCerto;
     }
 
-    @Override public boolean demitirFuncionario (int funcionarioID, String justificativa) {
+
+
+    @Override public boolean demitirFuncionario (int funcionarioID, String justificativa) throws RemoteException {
 
         boolean deuCerto;
 
@@ -96,6 +92,120 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
         catch (Exception e) {
 
             System.out.println("\nErro ao demitir funcionário: " + e.getMessage());
+
+            deuCerto = false;
+        }
+
+        return deuCerto;
+    }
+
+
+
+    public Funcionario acharFuncionario (int funcionarioID) throws RemoteException {
+
+        Funcionario procurado;
+
+        try {
+            LINK.conectar();
+
+            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_ACHAR_FUNCIONARIO);
+
+            var resultado = sentenca.executeQuery();
+
+            procurado = resultado.getObject(0, Funcionario.class);
+
+            LINK.link.close();
+        }
+
+        catch (Exception e) {
+
+            throw new RuntimeException("\nErro ao listar funcionários: " + e.getMessage());
+        }
+
+        return procurado;
+    }
+
+
+
+    @Override public List<String> listarFuncionarios () throws RemoteException {
+
+        List<String> lista = new LinkedList<>();
+
+        try {
+            LINK.conectar();
+
+            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_LISTAR_FUNCIONARIOS);
+
+            var resultado = sentenca.executeQuery();
+
+            var tamanhoResultado = resultado.getFetchSize();
+
+            for (var i = 0; i < tamanhoResultado; i++) lista.add(resultado.getString(i));
+
+            LINK.link.close();
+        }
+
+        catch (Exception e) {
+
+            System.out.println("\nErro ao listar funcionários: " + e.getMessage());
+        }
+
+        return lista;
+    }
+
+
+
+    @Override public boolean inserirCargo (String nome, double salario, int departamentoID) throws RemoteException {
+
+        boolean deuCerto;
+
+        try {
+            LINK.conectar();
+
+            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_CADASTRO_CARGO);
+
+            sentenca.setString(1, nome);
+
+            sentenca.setDouble(2, salario);
+
+            sentenca.setString(3, nome);
+
+            deuCerto = !sentenca.execute();
+
+            LINK.link.close();
+        }
+
+        catch (Exception e) {
+
+            System.out.println("\nProblema no cadastro de um cargo: " + e.getMessage());
+
+            deuCerto = false;
+        }
+
+        return deuCerto;
+    }
+
+
+
+    @Override public boolean inserirDepartamento (String nome) throws RemoteException {
+
+        boolean deuCerto;
+
+        try {
+            LINK.conectar();
+
+            PreparedStatement sentenca = LINK.link.prepareStatement(SQL_CADASTRO_DEPARTAMENTO);
+
+            sentenca.setString(1, nome);
+
+            deuCerto = !sentenca.execute();
+
+            LINK.link.close();
+        }
+
+        catch (Exception e) {
+
+            System.out.println("\nProblema no cadastro de um cargo: " + e.getMessage());
 
             deuCerto = false;
         }
