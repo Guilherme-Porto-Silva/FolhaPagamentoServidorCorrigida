@@ -134,7 +134,7 @@ O projeto aceita configuração via variáveis de ambiente. Caso não estejam de
 ## 🔗 Repositório do Cliente
 
 A interface gráfica do cliente para interação com este servidor pode ser encontrada no repositório:  
-👉 [[#]](https://github.com/Guilherme-Porto-Silva/FolhaPagamentoCliente)
+👉 [[#]](https://github.com/Guilherme-Porto-Silva/FolhaPagamentoClienteCorrigida/tree/main)
 
 ---
 
