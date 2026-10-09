@@ -1,7 +1,10 @@
 package implementadores;
 
 import RMI.Conexao;
+import componentes.NomeCargo;
 import interfaces.InterfaceFuncionario;
+import modelos.Cargo;
+
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.PreparedStatement;
@@ -23,6 +26,8 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
     private final String SQL_DEMICAO_JUSTIFICATIVA = "insert into Demissoes (funcionario_demitido, razao_demissao) values (?, ?)";
 
     private final String SQL_LISTAR_FUNCIONARIOS = "select nome from Funcionario";
+
+    private final String SQL_LISTAR_CARGOS = "select * from Cargo";
 
 
 
@@ -142,7 +147,7 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
             sentenca.setDouble(2, salario);
 
-            sentenca.setString(3, nome);
+            sentenca.setInt(3, departamentoID);
 
             deuCerto = !sentenca.execute();
 
@@ -185,5 +190,36 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
         }
 
         return deuCerto;
+    }
+
+
+
+    @Override public List<Cargo> listarCargos() throws RemoteException {
+
+        List<Cargo> lista = new LinkedList<>();
+
+        try {
+            Conexao comServidor = new Conexao();
+
+            PreparedStatement sentenca = comServidor.link.prepareStatement(SQL_LISTAR_CARGOS);
+
+            var resultado = sentenca.executeQuery();
+
+            while (resultado.next()) {
+
+                Cargo cargo = new Cargo(resultado.getInt("id"), resultado.getString("nome"));
+
+                lista.add(cargo);
+            }
+
+            comServidor.link.close();
+        }
+
+        catch (Exception e) {
+
+            System.out.println("\nErro ao listar funcionários: " + e.getMessage());
+        }
+
+        return lista;
     }
 }
