@@ -17,15 +17,6 @@ public class Cargo implements Serializable {
 
 
 
-    public Cargo(int id, String nome) {
-
-        this.id = id;
-
-        this.nome = nome;
-    }
-
-
-
     public Cargo (NomeCargo nomeCargo) {
 
         nome = nomeCargo.toString();
@@ -73,23 +64,13 @@ public class Cargo implements Serializable {
         }
     }
 
-    protected double getSalario() {
-        
-        return salario;
-    }
+    public int getId () { return id; }
 
-    protected Departamento getDepartamento() {
-        
-        return departamento;
-    }
+    protected double getSalario () { return salario; }
 
-    protected String getHorarioChegada() {
-        
-        return horarioChegada;
-    }
+    protected Departamento getDepartamento () { return departamento; }
 
-    protected String getHorarioSaida() {
-        
-        return horarioSaida;
-    }
+    protected String getHorarioChegada () { return horarioChegada; }
+
+    protected String getHorarioSaida () { return horarioSaida; }
 }

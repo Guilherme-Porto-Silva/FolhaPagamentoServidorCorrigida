@@ -7,7 +7,10 @@ import modelos.Cargo;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,11 +30,11 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
     private final String SQL_LISTAR_FUNCIONARIOS = "select nome from Funcionario";
 
-    private final String SQL_LISTAR_CARGOS = "select * from Cargo";
+    private final String SQL_BUSCAR_FUNCIONARIO = "SELECT id FROM Funcionario WHERE nome = ? LIMIT 2";
 
 
 
-    @Override public boolean cadastrarFuncionario (String nome, String cpf, int cargoID) throws RemoteException {
+    @Override public boolean cadastrarFuncionario (String nome, String cpf, NomeCargo cargoNome) throws RemoteException {
 
         boolean deuCerto;
 
@@ -44,7 +47,9 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
             sentencaFuncionario.setString(2, cpf);
 
-            sentencaFuncionario.setInt(3, cargoID);
+            Cargo cargo = new Cargo(cargoNome);
+
+            sentencaFuncionario.setInt(3, cargo.getId());
 
             deuCerto = !sentencaFuncionario.execute();
 
@@ -194,32 +199,29 @@ public class ServicoFuncionario extends UnicastRemoteObject implements Interface
 
 
 
-    @Override public List<Cargo> listarCargos() throws RemoteException {
+    @Override public int buscarIdFuncionario (String nome) throws RemoteException {
 
-        List<Cargo> lista = new LinkedList<>();
-
-        try {
+        try{
             Conexao comServidor = new Conexao();
 
-            PreparedStatement sentenca = comServidor.link.prepareStatement(SQL_LISTAR_CARGOS);
+            PreparedStatement comando = comServidor.link.prepareStatement(SQL_BUSCAR_FUNCIONARIO);
 
-            var resultado = sentenca.executeQuery();
+            comando.setString(1, nome);
 
-            while (resultado.next()) {
+            ResultSet resultado = comando.executeQuery();
 
-                Cargo cargo = new Cargo(resultado.getInt("id"), resultado.getString("nome"));
+            if (!resultado.next()) return -1;
 
-                lista.add(cargo);
-            }
+            int id = resultado.getInt("id");
 
-            comServidor.link.close();
+            if (resultado.next()) return -2;
+
+            return id;
         }
 
-        catch (Exception e) {
+        catch (SQLException e) {
 
-            System.out.println("\nErro ao listar funcionários: " + e.getMessage());
+            throw new RemoteException("Erro ao buscar o funcionário: " + e.getMessage(), e);
         }
-
-        return lista;
     }
 }
