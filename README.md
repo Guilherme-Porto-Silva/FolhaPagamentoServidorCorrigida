@@ -61,13 +61,14 @@ src/
 
 ## 🗄️ Configuração do Banco de Dados
 
-O servidor utiliza um banco de dados MySQL chamado `rmi_guigui_chan`.
+O servidor utiliza um banco de dados MySQL chamado `FOLHA_PAGAMENTO_RMI`.
 
 ### Script de Criação (`schema.sql`)
 
 ```sql
-CREATE DATABASE rmi_guigui_chan;
-USE rmi_guigui_chan;
+CREATE DATABASE FOLHA_PAGAMENTO_RMI;
+
+USE FOLHA_PAGAMENTO_RMI;
 
 CREATE TABLE Departamento (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -112,7 +113,7 @@ O projeto aceita configuração via variáveis de ambiente. Caso não estejam de
 
 | Variável | Descrição | Valor Padrão (Fallback) |
 | :--- | :--- | :--- |
-| `RMI_URL` | URL de Conexão JDBC | `jdbc:mysql://localhost/rmi_guigui_chan` |
+| `RMI_URL` | URL de Conexão JDBC | `jdbc:mysql://localhost/FOLHA_PAGAMENTO_RMI` |
 | `DB_USER` | Usuário do MySQL | `root` |
 | `DB_PASSWORD` | Senha do MySQL | `123456` |
 | `FUNCIONARIO_RMI` | Identificador RMI do serviço de funcionário | `numeroServicoFuncionario` |
