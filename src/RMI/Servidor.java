@@ -15,29 +15,23 @@ public class Servidor {
     public static void main (String[] args) {
 
         try{
-            // Serviço de nomes onde o servidor regista os objetos remotos e o cliente pesquisa a sua localização.
             Registry listaTelefonica = LocateRegistry.createRegistry(1500);
 
             InterfaceFuncionario servicoFuncionario = new ServicoFuncionario();
 
+            String numeroServicoFuncionario = System.getenv("FUNCIONARIO_RMI");
+            
+            if (numeroServicoFuncionario == null || numeroServicoFuncionario.isEmpty()) numeroServicoFuncionario = "numeroServicoFuncionario";
+    
+            listaTelefonica.bind(numeroServicoFuncionario, (Remote) servicoFuncionario);
+
             InterfacePagamento servicoPagamento = new ServicoPagamento();
 
-            try{
-                String numeroServicoFuncionario = System.getenv("FUNCIONARIO_RMI");
-                        
-                listaTelefonica.bind(numeroServicoFuncionario, (Remote) servicoFuncionario);
-
-                String numeroServicoPagamento = System.getenv("PAGAMENTO_RMI");
-
-                listaTelefonica.bind(numeroServicoPagamento, (Remote) servicoPagamento);
-            }
+            String numeroServicoPagamento = System.getenv("PAGAMENTO_RMI");
             
-            catch (NullPointerException e) {
-
-                listaTelefonica.bind("numeroServicoFuncionario", (Remote) servicoFuncionario);
-
-                listaTelefonica.bind("numeroServicoFuncionario", (Remote) servicoPagamento);
-            }
+            if (numeroServicoPagamento == null || numeroServicoPagamento.isEmpty()) numeroServicoPagamento = "numeroServicoPagamento";
+            
+            listaTelefonica.bind(numeroServicoPagamento, (Remote) servicoPagamento);
 
             System.out.println("Servidor iniciado.");
         }
