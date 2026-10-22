@@ -28,7 +28,7 @@ public class Conexao {
             try {
                 Class.forName(forName);
 
-                String url = "jdbc:mysql://localhost/rmi_guigui_chan";
+                String url = "jdbc:mysql://localhost/FOLHA_PAGAMENTO_RMI";
 
                 String usuario = "root";
 
