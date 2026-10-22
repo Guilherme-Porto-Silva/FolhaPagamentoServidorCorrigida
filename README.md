@@ -69,6 +69,11 @@ O servidor utiliza um banco de dados MySQL chamado `rmi_guigui_chan`.
 CREATE DATABASE rmi_guigui_chan;
 USE rmi_guigui_chan;
 
+CREATE TABLE Departamento (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(25) NOT NULL
+);
+
 CREATE TABLE Cargo (
     id INT PRIMARY KEY AUTO_INCREMENT,
     salario FLOAT DEFAULT 1675,
